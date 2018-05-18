@@ -38,23 +38,31 @@ sub EXPORT(|) {
     role Data {
         method obs($, $, $?) { say "we're in obs" }
         token term:sym<p5end>  { <!> }
-        token term:sym<p5data> { <!> }
-        token pod_block:sym<finish> {
+        token term:sym<p5data> {
+            #~ <!>
             ^^ \h*
-            [
-                | '=begin' \h+ 'finish' <pod_newline>
-                | '=for'   \h+ 'finish' <pod_newline>
-                | '=finish'  <pod_newline>
-                | '__DATA__' <pod_newline>
-                | '__END__'  <pod_newline>
-            ]
+            '__DATA__' <pod_newline>
             $<finish> = .*
         }
+
+        # IIRC you cannot modify tokens that were already seen/used by the compiler.
+        #~ token pod_block:sym<finish> {
+            #~ ^^ \h*
+            #~ [
+                #~ | '=begin' \h+ 'finish' <pod_newline>
+                #~ | '=for'   \h+ 'finish' <pod_newline>
+                #~ | '=finish'  <pod_newline>
+                #~ | '__DATA__' <pod_newline>
+                #~ | '__END__'  <pod_newline>
+            #~ ]
+            #~ $<finish> = .*
+        #~ }
     }
 
     $*LANG.define_slang('MAIN', $*LANG.slang_grammar('MAIN').^mixin(Data));
 
-    { '&term:<DATA>' => $DATA }
+    #~ { '&term:<DATA>' => $DATA } # this brakes it, no idea why
+    { '&DATA' => $DATA }
 }
 
 =begin pod
